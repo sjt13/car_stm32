@@ -73,6 +73,7 @@ float abs_float(float value);
 
 void parse_action(u8 *uart_receive_buf);
 void parse_cmd(u8 *cmd);
+void parse_cmd_elf2(u8 *cmd);
 void save_action(u8 *str);
 
 void do_group_once(int group_num);

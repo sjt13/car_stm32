@@ -628,6 +628,17 @@ void parse_cmd(u8 *cmd)
 		beep_on_times(2, 100);
     }
 }
+
+void parse_cmd_elf2(u8 *cmd)
+{
+    if (str_contain_str(cmd, (u8 *)"$CAR:") ||
+        str_contain_str(cmd, (u8 *)"$DST!") ||
+        str_contain_str(cmd, (u8 *)"$DST:") ||
+        str_contain_str(cmd, (u8 *)"$TZ!"))
+    {
+        parse_cmd(cmd);
+    }
+}
 // ִ�ж�����1��
 // �����Ƕ��������
 void do_group_once(int group_num)
