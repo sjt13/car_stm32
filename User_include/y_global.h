@@ -85,6 +85,7 @@ void rewrite_eeprom(void);
 void set_servo(int index, int pwm, int time);
 void zx_uart_send_str(u8 *str);
 void uart6_report_tel(void);
+void uart6_report_dbg(void);
 
 void soft_reset(void);
 void others_init(void);

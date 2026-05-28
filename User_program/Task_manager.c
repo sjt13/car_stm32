@@ -24,6 +24,7 @@ extern float pitch, roll, yaw;
 
 TaskTime TasksPare[Task_Num];
 float dir_anglecmd = 135.0;
+volatile u16 robot_control_dt_ms = 0;
 
 void Timer_Task_Count(void) // 1ms���жϼ���
 {
@@ -56,9 +57,12 @@ void HFPeriod_1msTask(void) // ����
 {
 	app_sensor_run();
 	
+	/* Disabled for SLAM motion debug: the PS2 receiver is connected to ELF2, not STM32 USB Host. */
+#if 0
 	USBH_Process(&USB_OTG_Core_dev, &USB_Host);
-	
+
 	app_ps2();
+#endif
 
 	if (uart1_get_ok) /* ����ָ�� */
 	{
@@ -98,9 +102,10 @@ void HFPeriod_1msTask(void) // ����
 	
 }
 
-void task_send_Rece(void) 
+void task_send_Rece(void)
 {
 	static u8 tel_div = 0;
+	static u8 dbg_div = 0;
 
 	loop_action();
 
@@ -115,10 +120,26 @@ void task_send_Rece(void)
 		tel_div = 0;
 		uart6_report_tel();
 	}
-}
 
+	dbg_div++;
+	if (dbg_div >= 10)
+	{
+		dbg_div = 0;
+		uart6_report_dbg();
+	}
+}
 void Robot_Control(void) // �����˿������񣬺���������
 {
+	static u32 last_control_ms = 0;
+	u32 now_ms = millis();
+	u32 dt_ms;
+
+	if (last_control_ms != 0)
+	{
+		dt_ms = now_ms - last_control_ms;
+		robot_control_dt_ms = (dt_ms > 0xffff) ? 0xffff : (u16)dt_ms;
+	}
+	last_control_ms = now_ms;
 	MPU_Get_Gyroscope(imu_gyro_data);
 	MPU_Get_Accelerometer(imu_acc_data);
 //	printf("mpu gy= %d   %d   %d     ac= %d    %d    %d \r\n", imu_gyro_data[0], imu_gyro_data[1], imu_gyro_data[2],

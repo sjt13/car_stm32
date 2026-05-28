@@ -21,6 +21,8 @@ u8 uart1_mode;
 
 uint8_t uart_receive_num = 0; /* ��¼���ĸ��ӿڽ��յ�������,����ָ���ʱ�򲻻��ڷ��� */
 
+extern volatile u16 robot_control_dt_ms;
+
 
 /* ��Ƭ��������λ */
 void soft_reset(void)
@@ -112,6 +114,29 @@ void uart6_report_tel(void)
         "$TEL:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d!",
         ix, iy, iw, wa, wb, wc, wd, ax, ay, az, gx, gy, gz);
     uart6_send_str(tel_buf);
+}
+
+void uart6_report_dbg(void)
+{
+    static uint8_t dbg_buf[192];
+    const int tgx = (int)Vel.TG_IX;
+    const int tgy = (int)Vel.TG_IY;
+    const int tgw = (int)Vel.TG_IW;
+    const int rta = (int)(Wheel_A.RT * 1000.0f);
+    const int rtb = (int)(Wheel_B.RT * 1000.0f);
+    const int rtc = (int)(Wheel_C.RT * 1000.0f);
+    const int rtd = (int)(Wheel_D.RT * 1000.0f);
+    const int pwma = (int)Wheel_A.PWM;
+    const int pwmb = (int)Wheel_B.PWM;
+    const int pwmc = (int)Wheel_C.PWM;
+    const int pwmd = (int)Wheel_D.PWM;
+    const int dt = (int)robot_control_dt_ms;
+
+    sprintf(
+        (char *)dbg_buf,
+        "$DBG:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d!",
+        tgx, tgy, tgw, rta, rtb, rtc, rtd, pwma, pwmb, pwmc, pwmd, dt);
+    uart6_send_str(dbg_buf);
 }
 
 uint16_t str_contain_str(unsigned char *str, unsigned char *str2)

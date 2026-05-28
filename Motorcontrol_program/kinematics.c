@@ -3,6 +3,20 @@
 // ���ݻ��������ͣ�ѡ�����������˶�ѧ��������
 #define ROBOT_TYPE ROBOT_MEC
 
+extern volatile u16 robot_control_dt_ms;
+
+static float encoder_speed_scale(float wheel_diameter)
+{
+	u16 dt_ms = robot_control_dt_ms;
+
+	if (dt_ms == 0)
+	{
+		dt_ms = 1000 / PID_RATE;
+	}
+
+	return PI * wheel_diameter * 1000.0f / (WHEEL_RESOLUTION * dt_ms);
+}
+
 #if (ROBOT_TYPE == ROBOT_MEC)
 /**
  * @��  ��  �������˶�ѧ����-�����ķ��
@@ -11,16 +25,18 @@
  */
 void ROBOT_Kinematics(void)
 {
+	const float wheel_scale = encoder_speed_scale(MEC_WHEEL_DIAMETER);
+
 	// 先无条件读取一次编码器实时速度，保证停车后 RT_IX/RT_IY/RT_IW 能及时刷新回零。
 	// 之前这里一旦目标速度全 0 就直接 return，导致上一次运动时的 RT_* 残值被一直保留，
 	// UART6 上行 $TEL 也会反复把旧速度发给 ELF2，最后把 ROS2 /odom 积分带偏。
-	Wheel_A.RT = (float)-((int16_t)ENCODER_A_GetCounter() * MEC_WHEEL_SCALE);
+	Wheel_A.RT = (float)-((int16_t)ENCODER_A_GetCounter() * wheel_scale);
 	ENCODER_A_SetCounter(0);
-	Wheel_B.RT = (float)((int16_t)ENCODER_B_GetCounter() * MEC_WHEEL_SCALE);
+	Wheel_B.RT = (float)((int16_t)ENCODER_B_GetCounter() * wheel_scale);
 	ENCODER_B_SetCounter(0);
-	Wheel_C.RT = (float)-((int16_t)ENCODER_C_GetCounter() * MEC_WHEEL_SCALE);
+	Wheel_C.RT = (float)-((int16_t)ENCODER_C_GetCounter() * wheel_scale);
 	ENCODER_C_SetCounter(0);
-	Wheel_D.RT = (float)((int16_t)ENCODER_D_GetCounter() * MEC_WHEEL_SCALE);
+	Wheel_D.RT = (float)((int16_t)ENCODER_D_GetCounter() * wheel_scale);
 	ENCODER_D_SetCounter(0);
 
 	// 用最新编码器值刷新底盘实时速度，哪怕当前目标是停车，也要把实时速度链路更新掉。
